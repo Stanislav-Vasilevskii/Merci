@@ -1,2 +1,2 @@
-INSERT INTO POINTS (id, user_id, quantity) VALUES (1, 1, 100);
-INSERT INTO POINTS (id, user_id, quantity) VALUES (2, 2, 500);
+INSERT INTO POINTS (user_id, quantity) VALUES (random_uuid(), 200);
+INSERT INTO POINTS (user_id, quantity) VALUES (random_uuid(), 500);

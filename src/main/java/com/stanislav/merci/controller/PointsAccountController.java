@@ -1,13 +1,17 @@
 package com.stanislav.merci.controller;
 
+import com.stanislav.merci.dto.PointsAccountDto;
+import com.stanislav.merci.entity.PointsAccount;
 import com.stanislav.merci.service.PointsAccountService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1/points_account")
 public class PointsAccountController {
     private final PointsAccountService pointsAccountService;
 
@@ -16,7 +20,24 @@ public class PointsAccountController {
     }
 
     @GetMapping("/{user_id}")
-    public int getQuantityByUserId(@PathVariable int user_id){
-        return pointsAccountService.findByUserId(user_id).getQuantity();
+    public ResponseEntity<PointsAccountDto> getByUserId(@PathVariable UUID user_id){
+        PointsAccount account = pointsAccountService.findByUserId(user_id);
+        PointsAccountDto result = PointsAccountDto.toPointsAccountDto(account);
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
+    @GetMapping()
+    public ResponseEntity<List<PointsAccountDto>> getAllPointsAccounts(){
+        List<PointsAccountDto> result = pointsAccountService.findAll().stream()
+                .map(PointsAccountDto::toPointsAccountDto)
+                .toList();
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
+    @PutMapping("/{user_id}/{quantity}")
+    public ResponseEntity<PointsAccountDto> changeQuantity(@PathVariable UUID user_id, @PathVariable int quantity){
+        PointsAccount account = pointsAccountService.changeQuantity(quantity, user_id);
+        PointsAccountDto result = PointsAccountDto.toPointsAccountDto(account);
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 }
