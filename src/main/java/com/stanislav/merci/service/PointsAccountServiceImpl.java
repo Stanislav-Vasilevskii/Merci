@@ -29,24 +29,36 @@ public class PointsAccountServiceImpl implements PointsAccountService {
     public List<PointsAccount> findAll() {
         return pointsAccountRepository.findAll();
     }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void save(PointsAccount account) {
+        pointsAccountRepository.save(account);
+    }
     @Override
     @Transactional
     public PointsAccount tryChangeAmount(UUID userId, Integer amount) {
+        PointsAccount account = findByUserId(userId);
+        changeAmount(account, amount);
         try {
-            changeAmount(userId, amount);
+            save(account);
         } catch (ObjectOptimisticLockingFailureException e) {
             log.warn("Somebody has already updated the amount for User:{} in concurrent transaction.", userId);
         }
         return pointsAccountRepository.findByUserId(userId).orElseThrow();
     }
-    @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void changeAmount(UUID userId, Integer amount) {
-        PointsAccount account = pointsAccountRepository.findByUserId(userId).orElseThrow();
-        int currentAmount = account.getAmount();
-        if(amount > 0 || currentAmount > Math.abs(amount)){
-            account.setAmount(currentAmount + amount);
-            pointsAccountRepository.save(account);
+
+    private void changeAmount(PointsAccount account, Integer amount) {
+        if(isPositiveAmountToAdd(amount) || isEnoughPointsToSubtractAmount(account.getAmount(), amount)){
+            account.setAmount(account.getAmount() + amount);
         }
+    }
+
+    private boolean isPositiveAmountToAdd(int amount){
+        return amount >= 0;
+    }
+
+    private boolean isEnoughPointsToSubtractAmount(int currentAmount, int amount){
+        return currentAmount > Math.abs(amount);
     }
 }

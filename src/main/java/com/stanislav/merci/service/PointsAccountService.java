@@ -8,6 +8,6 @@ import java.util.UUID;
 public interface PointsAccountService {
     PointsAccount findByUserId(UUID userId);
     List<PointsAccount> findAll();
+    void save(PointsAccount account);
     PointsAccount tryChangeAmount(UUID userId, Integer amount);
-    void changeAmount(UUID userId, Integer amount);
 }

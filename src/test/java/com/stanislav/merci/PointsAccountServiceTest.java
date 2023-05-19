@@ -3,6 +3,7 @@ package com.stanislav.merci;
 import com.stanislav.merci.dao.PointsAccountRepository;
 import com.stanislav.merci.entity.PointsAccount;
 import com.stanislav.merci.service.PointsAccountService;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -11,12 +12,9 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.times;
@@ -60,47 +58,34 @@ public class PointsAccountServiceTest {
         final PointsAccount srcPointsAccount = repository.save( preparePointsAccount());
         assertEquals(0, srcPointsAccount.getVersion());
 
-        List<Callable<PointsAccount>> tasks;
-        List<PointsAccount> canceledTasks = null;
-
-        // when
-        try (ExecutorService executor = Executors.newFixedThreadPool(amounts.size())) {
-
-            tasks = amounts.stream()
-                    .map(amount -> ((Callable<PointsAccount>)(() -> service.tryChangeAmount(srcPointsAccount.getUserId(), amount))))
-                    .toList();
-
+        Thread t1 = new Thread(() -> {
+            PointsAccount account = null;
             try {
-                canceledTasks = executor.invokeAll(tasks).stream()
-                        .map(task -> {
-                            try{
-                                return task.get();
-                            } catch (Exception ex){
-                                return null;
-                            }
-                        })
-                        .toList();
-            }
-            catch (InterruptedException e) {
+                account = repository.findByUserId(srcPointsAccount.getUserId()).orElseThrow();
+                Thread.sleep(6000);
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            try {
+                srcPointsAccount.setAmount(100);
+                service.save(account);
+            }catch (Exception e){
+                Assertions.assertTrue(e.getMessage().contains("Row was updated or deleted by another transaction"));
+            }
 
-            executor.shutdown();
-            assertTrue(executor.awaitTermination(1, TimeUnit.MINUTES));
-        }
+        });
 
-        // then
-        final PointsAccount pointsAccount = repository
-                .findById(srcPointsAccount.getId()).orElseThrow(() -> new IllegalArgumentException("No item found!"));
+        Thread t2 = new Thread(() -> service.tryChangeAmount(srcPointsAccount.getUserId(), 200));
+        t1.start();
+        t2.start();
+        t1.join();
+        t2.join();
 
-        List<PointsAccount> finalCanceledTasks = canceledTasks;
+        final PointsAccount result = repository.findByUserId( srcPointsAccount.getUserId()).orElse(null);
+
         assertAll(
-                () -> assertEquals(1, pointsAccount.getVersion()),
-                () -> {
-                    assert finalCanceledTasks != null;
-                    assertEquals(2, finalCanceledTasks.size());
-                },
-                () -> verify(service, times(3)).tryChangeAmount(any(), anyInt())
+                () -> assertEquals(1, result.getVersion()),
+                () -> verify(service, times(2)).save(any())
         );
     }
 
