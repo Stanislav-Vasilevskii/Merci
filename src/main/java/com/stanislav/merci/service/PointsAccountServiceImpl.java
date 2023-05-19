@@ -35,8 +35,7 @@ public class PointsAccountServiceImpl implements PointsAccountService {
         try {
             changeAmount(userId, amount);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.warn("Somebody has already updated the amount for User:{} in concurrent transaction. Will try again...", userId);
-            changeAmount(userId, amount);
+            log.warn("Somebody has already updated the amount for User:{} in concurrent transaction.", userId);
         }
         return pointsAccountRepository.findByUserId(userId).orElseThrow();
     }
