@@ -8,5 +8,6 @@ import java.util.UUID;
 public interface PointsAccountService {
     PointsAccount findByUserId(UUID userId);
     List<PointsAccount> findAll();
-    PointsAccount changeQuantity(int quantity, UUID userId);
+    PointsAccount tryChangeAmount(UUID userId, Integer amount);
+    void changeAmount(UUID userId, Integer amount);
 }

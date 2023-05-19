@@ -34,9 +34,9 @@ public class PointsAccountController {
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
-    @PutMapping("/{user_id}/{quantity}")
-    public ResponseEntity<PointsAccountDto> changeQuantity(@PathVariable UUID user_id, @PathVariable int quantity){
-        PointsAccount account = pointsAccountService.changeQuantity(quantity, user_id);
+    @PutMapping("/{user_id}/{amount}")
+    public ResponseEntity<PointsAccountDto> changeQuantity(@PathVariable UUID user_id, @PathVariable Integer amount){
+        PointsAccount account = pointsAccountService.tryChangeAmount(user_id, amount);
         PointsAccountDto result = PointsAccountDto.toPointsAccountDto(account);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }

@@ -14,9 +14,13 @@ public class PointsAccount {
     @Column(name="id")
     private UUID id;
 
+    @Version
+    @Column(name="version")
+    private Long version;
+
     @Column(name="user_id")
     private UUID userId;
 
-    @Column(name="quantity")
-    private int quantity;
+    @Column(name="amount")
+    private Integer amount;
 }

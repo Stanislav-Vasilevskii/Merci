@@ -10,19 +10,19 @@ import java.util.UUID;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PointsAccountDto {
     private UUID userId;
-    private int quantity;
+    private int amount;
 
     public PointsAccount toPointsAccount(){
         PointsAccount account = new PointsAccount();
         account.setUserId(userId);
-        account.setQuantity(quantity);
+        account.setAmount(amount);
         return account;
     }
 
     public static PointsAccountDto toPointsAccountDto(PointsAccount account){
         PointsAccountDto dto = new PointsAccountDto();
         dto.setUserId(account.getUserId());
-        dto.setQuantity(account.getQuantity());
+        dto.setAmount(account.getAmount());
         return dto;
     }
 }

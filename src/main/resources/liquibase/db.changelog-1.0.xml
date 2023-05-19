@@ -9,11 +9,15 @@
                 <constraints primaryKey="true" nullable="false"/>
             </column>
 
+            <column name="version" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+
             <column name="user_id" type="uuid">
                 <constraints nullable="false"/>
             </column>
 
-            <column name="quantity" type="int">
+            <column name="amount" type="int">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -22,16 +26,18 @@
     <changeSet id="1.0.1" author="stanislav.vasilevskii">
         <insert tableName="points">
             <column name="id" valueComputed="random_uuid()"/>
+            <column name="version" value="0"/>
             <column name="user_id" valueComputed="random_uuid()"/>
-            <column name="quantity" value="200"/>
+            <column name="amount" value="200"/>
         </insert>
     </changeSet>
 
     <changeSet id="1.0.2" author="stanislav.vasilevskii">
         <insert tableName="points">
             <column name="id" valueComputed="random_uuid()"/>
+            <column name="version" value="0"/>
             <column name="user_id" valueComputed="random_uuid()"/>
-            <column name="quantity" value="500"/>
+            <column name="amount" value="500"/>
         </insert>
     </changeSet>
 
