@@ -26,8 +26,8 @@ public class UserPointsServiceTest {
     @Autowired
     private UserPointsRepository repository;
 
-    private final Integer positiveAmount = 200;
-    private final Integer negativeAmount = -100;
+    private final Integer POSITIVE_AMOUNT = 200;
+    private final Integer NEGATIVE_AMOUNT = -100;
 
     @Test
     void shouldChangeAmountOnce() {
@@ -36,7 +36,7 @@ public class UserPointsServiceTest {
         assertEquals(0, srcUserPoints.getVersion());
 
         // when
-        srcUserPoints.setAmount(srcUserPoints.getAmount() + positiveAmount);
+        srcUserPoints.setAmount(srcUserPoints.getAmount() + POSITIVE_AMOUNT);
         service.update(UserPointsDto.toPointsDto(srcUserPoints));
 
         // then
@@ -57,15 +57,13 @@ public class UserPointsServiceTest {
         assertEquals(0, srcUserPoints.getVersion());
 
         // when
-        srcUserPoints.setAmount(srcUserPoints.getAmount() + positiveAmount);
+        srcUserPoints.setAmount(srcUserPoints.getAmount() + POSITIVE_AMOUNT);
         service.update(UserPointsDto.toPointsDto(srcUserPoints));
-
-        srcUserPoints.setAmount(srcUserPoints.getAmount() + positiveAmount);
         service.update(UserPointsDto.toPointsDto(srcUserPoints));
 
         // then
         final UserPoints userPoints = repository
-                .findById(srcUserPoints.getId()).orElseThrow();
+                .findByUserId(srcUserPoints.getUserId()).orElseThrow();
 
         assertAll(
                 () -> assertEquals(2, userPoints.getVersion()),
@@ -81,7 +79,7 @@ public class UserPointsServiceTest {
         assertEquals(0, srcUserPoints.getVersion());
 
         // when
-        srcUserPoints.setAmount(srcUserPoints.getAmount() + negativeAmount);
+        srcUserPoints.setAmount(srcUserPoints.getAmount() + NEGATIVE_AMOUNT);
         try {
             service.update(UserPointsDto.toPointsDto(srcUserPoints));
         } catch (Exception ex){
@@ -106,16 +104,16 @@ public class UserPointsServiceTest {
         assertEquals(0, srcUserPoints.getVersion());
 
         Thread t1 = new Thread(() -> {
-            UserPoints account = null;
+            UserPoints userPoints = null;
             try {
-                account = repository.findByUserId(srcUserPoints.getUserId()).orElseThrow();
+                userPoints = repository.findByUserId(srcUserPoints.getUserId()).orElseThrow();
                 Thread.sleep(6000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
             try {
                 srcUserPoints.setAmount(100);
-                service.save(account);
+                service.update(UserPointsDto.toPointsDto(userPoints));
             }catch (Exception e){
                 Assertions.assertTrue(e.getMessage().contains("Row was updated or deleted by another transaction"));
             }
@@ -135,7 +133,7 @@ public class UserPointsServiceTest {
 
         assertAll(
                 () -> assertEquals(1, result.getVersion()),
-                () -> verify(service, times(2)).save(any())
+                () -> verify(service, times(2)).update(any())
         );
     }
 

@@ -26,6 +26,9 @@ public class UserPointsControllerTest {
     @Autowired
     private UserPointsRepository repository;
 
+    private final Integer positiveAmount = 200;
+    private final Integer negativeAmount = -100;
+
     @Test
     void shouldCreateUserPoints() {
         // given
@@ -36,7 +39,7 @@ public class UserPointsControllerTest {
 
         // then
         final UserPoints userPoints = repository
-                .findById(srcUserPointsDto.getUserId()).orElseThrow();
+                .findByUserId(srcUserPointsDto.getUserId()).orElseThrow();
 
         assertAll(
                 () -> assertEquals(0, userPoints.getVersion()),
@@ -46,7 +49,7 @@ public class UserPointsControllerTest {
     }
 
     @Test
-    void shouldNotCreateUserPoints() {
+    void shouldNotCreateUserPoints_nullUserId() {
         // given
         final UserPointsDto srcUserPointsDto = prepareUserPointsDtoWithNullUserId();
 
@@ -61,6 +64,73 @@ public class UserPointsControllerTest {
 
         assertAll(
                 () -> verify(controller, times(1)).createUserPoints(any())
+        );
+    }
+
+    @Test
+    void shouldUpdateUserPoints() {
+        // given
+        final UserPointsDto srcUserPointsDto = prepareUserPointsDto();
+        controller.createUserPoints(srcUserPointsDto);
+        srcUserPointsDto.setAmount(positiveAmount);
+
+        // when
+       controller.updateUserPoints(srcUserPointsDto);
+
+        // then
+        final UserPoints userPoints = repository
+                .findByUserId(srcUserPointsDto.getUserId()).orElseThrow();
+
+        assertAll(
+                () -> assertEquals(1, userPoints.getVersion()),
+                () -> assertEquals(200, userPoints.getAmount()),
+                () -> verify(controller, times(1)).updateUserPoints(any())
+        );
+    }
+
+    @Test
+    void shouldNotUpdateUserPoints_notEnoughPointsException() {
+        // given
+        final UserPointsDto srcUserPointsDto = prepareUserPointsDto();
+        controller.createUserPoints(srcUserPointsDto);
+        srcUserPointsDto.setAmount(negativeAmount);
+
+        // when
+        try {
+            controller.updateUserPoints(srcUserPointsDto);
+        } catch (Exception ex){
+            assertEquals("Not enough points", ex.getMessage());
+        }
+
+        // then
+        final UserPoints userPoints = repository
+                .findByUserId(srcUserPointsDto.getUserId()).orElseThrow();
+
+        assertAll(
+                () -> assertEquals(0, userPoints.getVersion()),
+                () -> assertEquals(0, userPoints.getAmount()),
+                () -> verify(controller, times(1)).updateUserPoints(any())
+        );
+    }
+
+    @Test
+    void shouldDeleteUserPoints() {
+        // given
+        final UserPointsDto srcUserPointsDto = prepareUserPointsDto();
+        controller.createUserPoints(srcUserPointsDto);
+
+        // when
+        controller.deleteByUserId(srcUserPointsDto.getUserId());
+
+        // then
+        try {
+            controller.getByUserId(srcUserPointsDto.getUserId());
+        } catch (Exception ex){
+            assertEquals("User was not found", ex.getMessage());
+        }
+
+        assertAll(
+                () -> verify(controller, times(1)).deleteByUserId(any())
         );
     }
 

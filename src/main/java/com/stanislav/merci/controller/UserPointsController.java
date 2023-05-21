@@ -25,16 +25,14 @@ public class UserPointsController {
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Get User Points by ID")
     public UserPointsDto getByUserId(@PathVariable final UUID user_id){
-        return UserPointsDto.toPointsDto(userPointsService.findByUserId(user_id));
+        return userPointsService.findByUserId(user_id);
     }
 
     @GetMapping()
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Get all User Points")
     public List<UserPointsDto> getAll(){
-        return userPointsService.findAll().stream()
-                .map(UserPointsDto::toPointsDto)
-                .toList();
+        return userPointsService.findAll();
     }
 
     @PostMapping()

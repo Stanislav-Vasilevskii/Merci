@@ -6,7 +6,6 @@ import com.stanislav.merci.entity.UserPoints;
 import com.stanislav.merci.exception.NotEnoughPointsException;
 import com.stanislav.merci.exception.UserPointsAlreadyExistsException;
 import com.stanislav.merci.exception.UserPointsNotFoundException;
-import com.stanislav.merci.exception.UserPointsWasDeletedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -26,45 +25,41 @@ public class UserPointsServiceImpl implements UserPointsService {
     }
 
     @Override
-    public UserPoints findByUserId(UUID userId) {
+    public UserPointsDto findByUserId(UUID userId) {
         UserPoints points = userPointsRepository.findByUserId(userId)
                 .orElseThrow(() -> new UserPointsNotFoundException("User was not found"));
-        if(points.isDeleted()){
-            throw new UserPointsWasDeletedException("User was deleted");
-        }
-        return points;
+        return UserPointsDto.toPointsDto(points);
     }
 
     @Override
-    public List<UserPoints> findAll() {
+    public List<UserPointsDto> findAll() {
 
         return userPointsRepository.findAll()
                 .stream()
                 .filter(p -> !p.isDeleted())
+                .map(UserPointsDto::toPointsDto)
                 .toList();
     }
 
     @Override
-    public void save(UserPoints account) {
-        userPointsRepository.save(account);
-    }
-
-    @Override
     public void delete(UUID userId) {
-        UserPoints points = findByUserId(userId);
-        points.setDeleted(true);
-        save(points);
+        UserPoints userPoints = userPointsRepository.findByUserId(userId)
+                .orElseThrow(() -> new UserPointsNotFoundException("User was not found"));
+        userPoints.setDeleted(true);
+        userPointsRepository.save(userPoints);
     }
 
     @Override
     @Transactional
     public void update(UserPointsDto pointsDto) {
         final UUID userId = pointsDto.getUserId();
-        final Integer amount = pointsDto.getAmount();
-        final UserPoints userPoints = findByUserId(userId);
-        changeAmount(userPoints, amount);
+        final Integer changeAmount = pointsDto.getAmount();
+        final UserPoints userPoints = userPointsRepository.findByUserId(userId)
+                .orElseThrow(() -> new UserPointsNotFoundException("User was not found"));
+        final Integer resultAmount = changeAmount(userPoints.getAmount(), changeAmount);
+        userPoints.setAmount(resultAmount);
         try {
-            save(userPoints);
+            userPointsRepository.save(userPoints);
         } catch (ObjectOptimisticLockingFailureException e) {
             log.warn("Somebody has already updated the amount for User:{} in concurrent transaction.", userId);
         }
@@ -72,20 +67,16 @@ public class UserPointsServiceImpl implements UserPointsService {
 
     @Override
     public void create(UserPointsDto userPointsDto) {
-        UserPoints userPoints = new UserPoints();
-        userPoints.setUserId(userPointsDto.getUserId());
-        userPoints.setAmount(userPointsDto.getAmount());
-        userPoints.setDeleted(false);
         try {
-            save(userPoints);
+            userPointsRepository.save(userPointsDto.toPoints());
         } catch (DataIntegrityViolationException ex){
             throw new UserPointsAlreadyExistsException("User Points already exists");
         }
     }
 
-    private void changeAmount(UserPoints points, Integer amount) {
-        if(isPositiveAmountToAdd(amount) || isEnoughPointsToSubtractAmount(points.getAmount(), amount)){
-            points.setAmount(points.getAmount() + amount);
+    private Integer changeAmount(Integer initialAmount, Integer changeAmount) {
+        if(isPositiveAmountToAdd(changeAmount) || isEnoughPointsToSubtractAmount(initialAmount, changeAmount)){
+            return initialAmount + changeAmount;
         } else {
             throw new NotEnoughPointsException("Not enough points");
         }
