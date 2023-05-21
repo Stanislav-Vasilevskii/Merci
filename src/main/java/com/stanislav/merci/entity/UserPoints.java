@@ -2,12 +2,14 @@ package com.stanislav.merci.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.Where;
 
 import java.util.UUID;
 
 @Entity
 @Table(name = "user_points")
 @Data
+@Where(clause = "is_deleted=false")
 public class UserPoints {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

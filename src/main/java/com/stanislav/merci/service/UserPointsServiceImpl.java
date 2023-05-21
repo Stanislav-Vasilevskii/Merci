@@ -4,9 +4,11 @@ import com.stanislav.merci.dao.UserPointsRepository;
 import com.stanislav.merci.dto.UserPointsDto;
 import com.stanislav.merci.entity.UserPoints;
 import com.stanislav.merci.exception.NotEnoughPointsException;
+import com.stanislav.merci.exception.UserPointsAlreadyExistsException;
 import com.stanislav.merci.exception.UserPointsNotFoundException;
 import com.stanislav.merci.exception.UserPointsWasDeletedException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -74,7 +76,11 @@ public class UserPointsServiceImpl implements UserPointsService {
         userPoints.setUserId(userPointsDto.getUserId());
         userPoints.setAmount(userPointsDto.getAmount());
         userPoints.setDeleted(false);
-        userPointsRepository.save(userPoints);
+        try {
+            save(userPoints);
+        } catch (DataIntegrityViolationException ex){
+            throw new UserPointsAlreadyExistsException("User Points already exists");
+        }
     }
 
     private void changeAmount(UserPoints points, Integer amount) {
