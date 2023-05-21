@@ -6,3 +6,6 @@ Cервис изменения баланса бонусов клиента
 docker build -t merci .
 2. Запуск образа
 docker run -dp 8075:8075 merci
+
+Инструкция по запуску тестов:
+1. gradle clean check
