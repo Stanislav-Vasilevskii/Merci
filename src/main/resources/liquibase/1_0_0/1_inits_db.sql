@@ -10,5 +10,5 @@ create table user_points
     constraint user_points_pk2
         unique (user_id),
     constraint check_amount
-        check (amount > 0)
+        check (amount >= 0)
 );
