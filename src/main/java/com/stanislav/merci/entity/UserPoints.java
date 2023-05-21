@@ -6,9 +6,9 @@ import lombok.Data;
 import java.util.UUID;
 
 @Entity
-@Table(name = "points")
+@Table(name = "user_points")
 @Data
-public class PointsAccount {
+public class UserPoints {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name="id")
@@ -23,4 +23,7 @@ public class PointsAccount {
 
     @Column(name="amount")
     private Integer amount;
+
+    @Column(name="is_deleted")
+    private boolean isDeleted;
 }
